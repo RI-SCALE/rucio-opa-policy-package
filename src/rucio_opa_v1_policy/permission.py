@@ -8,14 +8,13 @@ rule ownership, no database lookups. Request kwargs are forwarded only so
 OPA's decision log records what each decision was about.
 """
 
-import logging
-import os
-from enum import Enum
-from typing import TYPE_CHECKING, Any
-
 import hashlib
 import json
+import logging
+import os
 import time
+from enum import Enum
+from typing import TYPE_CHECKING, Any
 from urllib.request import Request, urlopen
 
 if TYPE_CHECKING:
