@@ -56,7 +56,14 @@ To reuse a running OPA: `make up`, then
 
 ## Releasing
 
-Bump `version` in `pyproject.toml`, commit, push a `vX.Y.Z` tag. `release.yml` runs CI, checks
-the tag against the version, builds wheel and sdist with provenance attestation and attaches
-them to the GitHub Release. Consumers pin a release tag (e.g.
-`make vendor-policy-package POLICY_PKG_REF=vX.Y.Z` in the testbed).
+Bump the version in `pyproject.toml`, commit, push a `vX.Y.Z` tag; `release.yml`
+checks that tag and version match, builds wheel and sdist with provenance
+attestation and creates the GitHub Release.
+
+```bash
+uv version X.Y.Z
+git commit -am "chore(release): X.Y.Z"
+git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin main vX.Y.Z
+```
+
+Wheel: `https://github.com/RI-SCALE/rucio-opa-policy-package/releases/download/vX.Y.Z/rucio_opa_v1_policy-X.Y.Z-py3-none-any.whl`.
