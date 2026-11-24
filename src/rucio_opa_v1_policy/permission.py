@@ -1,11 +1,9 @@
 # Licensed under the Apache License, Version 2.0
-"""
-Unified permission module — dispatches has_permission() to OPA.
+"""Rucio permission module that delegates every decision to OPA.
 
-Authorization is role-based (ADR-008): the Rego decides from the action and
-the token's claims alone. Nothing here reads the Rucio catalog — no scope or
-rule ownership, no database lookups. Request kwargs are forwarded only so
-OPA's decision log records what each decision was about.
+The policy decides from the action and the token's claims alone; nothing
+here reads the Rucio catalog. Selected kwargs are forwarded so that OPA's
+decision log records what each decision was about.
 """
 
 import hashlib
@@ -28,18 +26,12 @@ from rucio_opa_v1_policy.opa_client import query_opa
 
 log = logging.getLogger(__name__)
 
-# Set RUCIO_OPA_DEBUG_INPUT=1 in the rucio-server environment to log every
-# outbound input document at WARNING level.
+# RUCIO_OPA_DEBUG_INPUT=1 logs every input document at WARNING level.
 _DEBUG_INPUT = os.environ.get("RUCIO_OPA_DEBUG_INPUT", "").strip() in ("1", "true", "True")
 
-# Claims forwarded to OPA, as <input.token key>: <claim name>. acr carries
-# the MFA level the ODRL tier policy may require; sub/iss/aud identify the
-# person in OPA's decision log.
-_LIST_CLAIMS: dict[str, str] = {"entitlements": "entitlements"}
+# Forwarded as-is: acr for MFA-dependent policies, the rest for the decision log.
 _SCALAR_CLAIMS: tuple[str, ...] = ("acr", "aud", "iss", "sub")
 
-# kwargs forwarded to OPA for the decision log only; authz.rego does not
-# read them.
 _PASSTHROUGH_KEYS: frozenset[str] = frozenset(
     {
         "account",
@@ -90,7 +82,7 @@ def has_permission(
     try:
         allowed = query_opa(input_doc)
     except Exception as err:
-        log.critical("OPA connection failure for action=%s: %s", action, err, exc_info=True)
+        log.critical("OPA query failed for action=%s: %s", action, err, exc_info=True)
         return PermissionResult(False, "Authorization engine unreachable (system degraded)")
     return PermissionResult(allowed, "" if allowed else "Access denied by OPA policy validation")
 
@@ -105,11 +97,10 @@ def _build_input(issuer: "InternalAccount", action: str, kwargs: dict[str, Any])
 
 
 def _request_claims() -> dict[str, Any]:
-    """
-    The decoded JWT payload for the current request.
+    """Return the decoded token of the current request, or {} without one.
 
-    Populated by the patched REST layer (see patches/rucio/). Returns {}
-    outside a request context — userpass and daemon calls carry no token.
+    The claims are placed in ``request.environ["token_claims"]`` by the Rucio
+    REST layer patch; userpass and daemon calls carry none.
     """
     try:
         from flask import has_request_context, request
@@ -121,7 +112,7 @@ def _request_claims() -> dict[str, Any]:
 
 
 def _as_list(value: Any) -> list[str]:
-    """Normalise a claim that may be a list or a space-separated string."""
+    """Normalise a list claim that may also arrive as a space-separated string."""
     if value is None:
         return []
     if isinstance(value, str):
@@ -130,7 +121,7 @@ def _as_list(value: Any) -> list[str]:
 
 
 def _bearer_token() -> str:
-    """The raw access token of the current request (Rucio's header or Authorization)."""
+    """Return the raw access token from X-Rucio-Auth-Token or Authorization."""
     from flask import request
 
     token = request.headers.get("X-Rucio-Auth-Token", "")
@@ -141,10 +132,10 @@ def _bearer_token() -> str:
 
 
 def _userinfo_entitlements(claims: dict[str, Any]) -> list[str]:
-    """
-    entitlements (or eduperson_entitlement) from the issuer's userinfo endpoint, for AARC-style
-    IdPs (e.g. EGI Check-In) that keep entitlements out of the access token.
-    Cached per token until it expires; any failure yields [] (fails closed).
+    """Fetch entitlements from the issuer's userinfo endpoint.
+
+    For IdPs that keep entitlements out of the access token (e.g. EGI
+    Check-in). Cached per token until it expires; any failure yields [].
     """
     raw = _bearer_token()
     if not raw or "iss" not in claims:
@@ -174,16 +165,12 @@ def _userinfo_entitlements(claims: dict[str, Any]) -> list[str]:
 
 
 def _token_claims() -> dict[str, Any]:
+    """Return the claims OPA decides on; entitlements fall back to userinfo."""
     claims = _request_claims()
-    token: dict[str, Any] = {
-        key: _as_list(claims.get(claim)) for key, claim in _LIST_CLAIMS.items()
-    }
-    # AARC-style IdPs name the claim eduperson_entitlement, and some only
-    # serve it from userinfo.
-    if claims and not token["entitlements"]:
-        token["entitlements"] = _as_list(
-            claims.get("eduperson_entitlement")
-        ) or _userinfo_entitlements(claims)
+    entitlements = _as_list(claims.get("entitlements") or claims.get("eduperson_entitlement"))
+    if claims and not entitlements:
+        entitlements = _userinfo_entitlements(claims)
+    token: dict[str, Any] = {"entitlements": entitlements}
     for key in _SCALAR_CLAIMS:
         if key in claims:
             token[key] = claims[key]
@@ -194,10 +181,7 @@ def _externalise(value: Any) -> Any:
     if hasattr(value, "external"):
         return value.external
     if isinstance(value, Enum):
-        # Rucio passes DIDType/RSEType members inside dids[] and parameter
-        # dicts. json.dumps cannot serialise them, and an unserialisable
-        # input document fails the whole decision closed.
-        return value.value
+        return value.value  # e.g. DIDType inside dids[]; not JSON-serialisable
     if isinstance(value, dict):
         return {k: _externalise(v) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
