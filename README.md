@@ -67,3 +67,9 @@ git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin main vX.Y.Z
 ```
 
 Wheel: `https://github.com/RI-SCALE/rucio-opa-policy-package/releases/download/vX.Y.Z/rucio_opa_v1_policy-X.Y.Z-py3-none-any.whl`.
+
+Verify:
+
+```bash
+gh attestation verify rucio_opa_v1_policy-X.Y.Z-py3-none-any.whl --repo RI-SCALE/rucio-opa-policy-package
+```
