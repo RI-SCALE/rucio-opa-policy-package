@@ -21,7 +21,8 @@ and asks OPA. Only a boolean `true` allows; anything else, including errors, den
 - `token` comes from the decoded JWT of the request (`request.environ["token_claims"]`, set by
   the patched Rucio REST layer). Entitlements are read from `entitlements`, then
   `eduperson_entitlement`, then the issuer's userinfo endpoint (cached per token).
-- `kwargs` are forwarded for OPA's decision log only; the policy does not read them.
+- `kwargs` (an allow-listed subset) are available to the policy and land in OPA's decision log;
+  the testbed's policy decides without them.
 - The Rego policy lives with the deployment (e.g. `configs/opa/authz.rego` in the testbed).
 
 ## Configuration
