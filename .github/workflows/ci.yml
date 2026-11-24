@@ -1,0 +1,30 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.12"]  # 3.9: Rucio server image
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.x"
+          enable-cache: true
+          python-version: ${{ matrix.python }}
+      - run: make sync
+      - run: make lint
+      - run: make typecheck
+      - run: make test
+      - run: make build
