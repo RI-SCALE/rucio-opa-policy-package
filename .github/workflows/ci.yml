@@ -24,7 +24,8 @@ jobs:
       - run: make sync
       - run: make lint
       - run: make typecheck
-      - run: make audit
+      - if: matrix.python == '3.12'   # dev tooling only (no runtime deps); fixes no longer support 3.9
+        run: make audit
       - run: make test-unit
       - run: make build
 
