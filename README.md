@@ -1,13 +1,13 @@
 # rucio-opa-policy-package
 
 Rucio policy package that delegates permission checks to [OPA](https://www.openpolicyagent.org/),
-deciding by the token's claims (role-based, ADR-008). Used by the RI-SCALE DEP DLM
-[testbed](https://github.com/RI-SCALE/dep-dlm-testbed) and deployment.
+deciding by the token's claims. Used by the RI-SCALE DEP DLM
+[testbed](https://github.com/RI-SCALE/dep-dlm-testbed) and deployment. Supports Rucio 35 and later.
 
 ## How it works
 
 Rucio calls `has_permission(issuer, action, kwargs)`; the package builds an input document
-and asks OPA. Any error fails closed (deny).
+and asks OPA. Only a boolean `true` allows; anything else, including errors, denies.
 
 ```json
 {
@@ -36,7 +36,7 @@ package = rucio_opa_v1_policy
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `OPA_URL` | `http://localhost:8181` | OPA base URL |
-| `OPA_POLICY_PATH` | `vo/authz/v1/allow` | Rule queried under `/v1/data/` |
+| `OPA_POLICY_PATH` | `vo/authz/v1/allow` | Rule queried under `/v1/data/`; must evaluate to a boolean |
 | `OPA_TIMEOUT` | `2` | OPA request timeout (s) |
 | `RUCIO_OPA_USERINFO_TIMEOUT` | `3` | Userinfo request timeout (s) |
 | `RUCIO_OPA_DEBUG_INPUT` | off | `1`: log every input document at WARNING |
@@ -46,11 +46,17 @@ package = rucio_opa_v1_policy
 Needs [uv](https://docs.astral.sh/uv/). Targets Python 3.9 (Rucio server image) and later.
 
 ```bash
-make sync lint typecheck test
+make sync lint typecheck audit test-unit   # no Docker needed
+make test-integration                      # real OPA via testcontainers (Docker)
 ```
+
+The integration tests run against a minimal contract policy in `tests/integration/policies/`.
+To reuse a running OPA: `make up`, then
+`POLICY_TEST_OPA_URL=http://localhost:8181 make test-integration`.
 
 ## Releasing
 
-Bump `version` in `pyproject.toml`, commit, push a `vX.Y.Z` tag; `release.yml` checks the
-version, builds wheel and sdist and creates the GitHub Release. Consumers vendor a tag
-(e.g. `make vendor-policy-package POLICY_PKG_REF=vX.Y.Z` in the testbed).
+Bump `version` in `pyproject.toml`, commit, push a `vX.Y.Z` tag. `release.yml` runs CI, checks
+the tag against the version, builds wheel and sdist with provenance attestation and attaches
+them to the GitHub Release. Consumers pin a release tag (e.g.
+`make vendor-policy-package POLICY_PKG_REF=vX.Y.Z` in the testbed).
