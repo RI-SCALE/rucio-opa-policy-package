@@ -38,9 +38,9 @@ _install_fake_rucio()
 def _clear_caches():
     from rucio_opa_v1_policy import permission
 
+    yield
     permission._USERINFO_CACHE.clear()
     permission._USERINFO_ENDPOINTS.clear()
-    yield
 
 
 @pytest.fixture

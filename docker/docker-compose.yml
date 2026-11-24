@@ -1,0 +1,10 @@
+# OPA with the contract fixture policy, for the integration tests
+# (started by testcontainers, or `make up` to keep it running).
+services:
+  opa:
+    image: openpolicyagent/opa:1.8.0-static
+    ports:
+      - "${OPA_PORT:-8181}:8181"
+    volumes:
+      - ../tests/integration/policies:/policies:ro
+    command: run --server --log-level info --addr=0.0.0.0:8181 /policies

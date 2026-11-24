@@ -3,10 +3,13 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
   "containerEnv": {
     "UV_LINK_MODE": "copy"
   },
-  "postCreateCommand": "make sync",
+  "postCreateCommand": "rm -rf .venv && make sync",
   "customizations": {
     "vscode": {
       "extensions": ["ms-python.python", "charliermarsh.ruff"],
