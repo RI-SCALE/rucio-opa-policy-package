@@ -1,27 +1,44 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "rucio-opa-v1-policy"
 version = "0.1.0"
-description = "Rucio policy package (OPA as PDP, OIDC token-native authorisation via URN entitlements)"
-authors = [{ name = "someone", email = "placeholder@cern.ch" }]
+description = "Rucio policy package that delegates permission checks to OPA, deciding by the token's claims"
+authors = [{ name = "RI-SCALE DEP DLM" }]
 requires-python = ">=3.9"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
 
-[project.optional-dependencies]
-dev = ["rucio>=35.0.0", "pytest>=7.0", "pytest-cov"]
+[dependency-groups]
+dev = ["pytest>=8", "pytest-cov>=5", "flask>=3", "ruff>=0.6", "mypy>=1.10"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.ruff]
 line-length = 100
-src = ["src"]
-extend-exclude = ["src/rucio_authz_client"]
+src = ["src", "tests"]
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["UP006", "UP035"]  # keep typing imports Python 3.9-compatible
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106", "S107"]
+"src/rucio_opa_v1_policy/*" = ["S310"]  # urlopen on configured OPA/issuer URLs
+
+[tool.mypy]
+files = ["src"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=rucio_opa_v1_policy --cov-report=term-missing"
