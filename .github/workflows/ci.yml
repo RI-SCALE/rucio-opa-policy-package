@@ -13,18 +13,27 @@ jobs:
   check:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        python: ["3.9", "3.12"]  # 3.9: Rucio server image
+        python: ["3.9", "3.12"]   # 3.9 = Rucio 41 server image
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
-          version: "0.11.x"
           enable-cache: true
           python-version: ${{ matrix.python }}
       - run: make sync
       - run: make lint
       - run: make typecheck
-      - run: make test
+      - run: make audit
+      - run: make test-unit
       - run: make build
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: make sync
+      - run: make test-integration
