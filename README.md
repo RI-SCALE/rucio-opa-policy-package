@@ -55,6 +55,8 @@ The integration tests run against a minimal contract policy in `tests/integratio
 To reuse a running OPA: `make up`, then
 `POLICY_TEST_OPA_URL=http://localhost:8181 make test-integration`.
 
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for layout, rules and style.
+
 ## Releasing
 
 Bump the version in `pyproject.toml`, commit, push a `vX.Y.Z` tag; `release.yml`
