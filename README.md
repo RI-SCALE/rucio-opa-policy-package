@@ -4,6 +4,8 @@ Rucio policy package that delegates permission checks to [OPA](https://www.openp
 deciding by the token's claims. Used by the RI-SCALE DEP DLM
 [testbed](https://github.com/RI-SCALE/dep-dlm-testbed) and deployment. Supports Rucio 35 and later.
 
+Developed within RI-SCALE WP2 (DEP data lifecycle management).
+
 ## How it works
 
 Rucio calls `has_permission(issuer, action, kwargs)`; the package builds an input document
