@@ -10,7 +10,7 @@
   "containerEnv": {
     "UV_LINK_MODE": "copy"
   },
-  "postCreateCommand": "rm -rf .venv && make sync",
+  "postCreateCommand": "rm -rf .venv && make sync && make hooks",
   "customizations": {
     "vscode": {
       "extensions": ["ms-python.python", "charliermarsh.ruff"],
