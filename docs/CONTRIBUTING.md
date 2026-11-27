@@ -47,9 +47,11 @@ docker/            local OPA for `make up`
   path gets a test.
 - Integration tests when the input document or the OPA call changes
   (`make test-integration`, needs Docker).
-- CI (`.github/workflows/ci.yml`) runs `lint`, `typecheck`, `audit`,
-  `test-unit` and `test-integration`; run the same make targets locally
-  before opening a PR.
+- Run `make hooks` once: ruff, the format check, the import contracts and
+  mypy then run on every commit (`make format` fixes what ruff reports).
+- CI (`.github/workflows/ci.yml`) runs `check` (the same hooks on all
+  files), `audit`, `test-unit` and `test-integration`; run the same make
+  targets locally before opening a PR.
 
 ## Commits and releases
 

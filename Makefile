@@ -14,10 +14,11 @@ help: ## List targets
 sync: ## Create or refresh .venv from uv.lock
 	$(UV) sync --locked
 
-lint: ## ruff lint, format check and import contracts
-	$(UV) run ruff check src tests
-	$(UV) run ruff format --check src tests
-	$(UV) run lint-imports
+check: ## ruff, format, import contracts and mypy via pre-commit
+	$(UV) run pre-commit run --all-files
+
+hooks: ## Install the git pre-commit hook
+	$(UV) run pre-commit install
 
 audit: ## pip-audit the locked dev environment
 	$(UV) run pip-audit --skip-editable
@@ -25,9 +26,6 @@ audit: ## pip-audit the locked dev environment
 format: ## Auto-fix ruff findings and formatting
 	$(UV) run ruff check --fix src tests
 	$(UV) run ruff format src tests
-
-typecheck: ## mypy
-	$(UV) run mypy
 
 test-unit: ## Unit tests only (no Docker)
 	$(UV) run pytest tests/unit

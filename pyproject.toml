@@ -22,6 +22,7 @@ dev = [
     "ruff>=0.17.6",
     "testcontainers>=4.9",
     "pip-audit>=2.9",
+    "pre-commit>=4.3.0",
 ]
 
 [tool.ruff]

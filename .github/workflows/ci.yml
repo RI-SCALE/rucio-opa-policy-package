@@ -22,8 +22,7 @@ jobs:
           enable-cache: true
           python-version: ${{ matrix.python }}
       - run: make sync
-      - run: make lint
-      - run: make typecheck
+      - run: make check
       - if: matrix.python == '3.12'   # dev tooling only (no runtime deps); fixes no longer support 3.9
         run: make audit
       - run: make test-unit

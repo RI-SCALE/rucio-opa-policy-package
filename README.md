@@ -49,7 +49,8 @@ package = rucio_opa_v1_policy
 Needs [uv](https://docs.astral.sh/uv/). Targets Python 3.9 (Rucio server image) and later.
 
 ```bash
-make sync lint typecheck audit test-unit   # no Docker needed
+make sync hooks                            # once: venv from uv.lock, git pre-commit hook
+make check audit test-unit                 # no Docker needed
 make test-integration                      # real OPA via testcontainers (Docker)
 ```
 
